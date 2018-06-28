@@ -16,7 +16,7 @@ use std::fmt::{self, Display};
 use std::ops::Deref;
 
 use gl;
-use glutin::{self, ContextBuilder, ControlFlow, CursorState, Event, EventsLoop,
+use glutin::{self, ContextBuilder, ControlFlow, Event, EventsLoop,
              MouseCursor as GlutinMouseCursor, WindowBuilder};
 use glutin::GlContext;
 
@@ -208,7 +208,8 @@ fn create_gl_window(
 ) -> ::std::result::Result<glutin::GlWindow, glutin::CreationError> {
     let context = ContextBuilder::new()
         .with_srgb(srgb)
-        .with_vsync(true);
+        .with_vsync(true)
+        .with_hardware_acceleration(None);
     ::glutin::GlWindow::new(window, context, event_loop)
 }
 
@@ -331,13 +332,7 @@ impl Window {
     pub fn set_cursor_visible(&mut self, visible: bool) {
         if visible != self.cursor_visible {
             self.cursor_visible = visible;
-            if let Err(err) = self.window.set_cursor_state(if visible {
-                CursorState::Normal
-            } else {
-                CursorState::Hide
-            }) {
-                warn!("Failed to set cursor visibility: {}", err);
-            }
+            self.window.hide_cursor(!visible);
         }
     }
 
