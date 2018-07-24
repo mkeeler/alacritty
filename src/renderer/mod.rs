@@ -479,8 +479,8 @@ const ATLAS_SIZE: i32 = 1024;
 
 impl QuadRenderer {
     // TODO should probably hand this a transform instead of width/height
-    pub fn new(config: &Config, size: PhysicalSize) -> Result<QuadRenderer, Error> {
-        let program = ShaderProgram::new(config, size)?;
+    pub fn new(config: &Config, size: PhysicalSize, dpr: f64) -> Result<QuadRenderer, Error> {
+        let program = ShaderProgram::new(config, size, dpr)?;
 
         let mut vao: GLuint = 0;
         let mut vbo: GLuint = 0;
@@ -639,7 +639,7 @@ impl QuadRenderer {
         while let Ok(msg) = self.rx.try_recv() {
             match msg {
                 Msg::ShaderReload => {
-                    self.reload_shaders(config, PhysicalSize::new(props.width as f64, props.height as f64));
+                    self.reload_shaders(config, PhysicalSize::new(props.width as f64, props.height as f64), props.dpr);
                 }
             }
         }
@@ -690,9 +690,9 @@ impl QuadRenderer {
         })
     }
 
-    pub fn reload_shaders(&mut self, config: &Config, size: PhysicalSize) {
+    pub fn reload_shaders(&mut self, config: &Config, size: PhysicalSize, dpr: f64) {
         warn!("Reloading shaders ...");
-        let program = match ShaderProgram::new(config, size) {
+        let program = match ShaderProgram::new(config, size, dpr) {
             Ok(program) => {
                 warn!(" ... OK");
                 program
@@ -718,11 +718,11 @@ impl QuadRenderer {
         self.program = program;
     }
 
-    pub fn resize(&mut self, size: PhysicalSize) {
+    pub fn resize(&mut self, size: PhysicalSize, dpr: f64) {
         let (width, height) : (u32, u32) = size.into();
 
-        let padding_x = i32::from(self.program.padding_x);
-        let padding_y = i32::from(self.program.padding_y);
+        let padding_x = (self.program.padding_x as f64 * dpr) as i32;
+        let padding_y = (self.program.padding_y as f64 * dpr) as i32;
 
         // viewport
         unsafe {
@@ -955,7 +955,8 @@ impl ShaderProgram {
 
     pub fn new(
         config: &Config,
-        size: PhysicalSize
+        size: PhysicalSize,
+        dpr: f64
     ) -> Result<ShaderProgram, ShaderCreationError> {
         let vertex_source = if cfg!(feature = "live-shader-reload") {
             None
@@ -1019,8 +1020,8 @@ impl ShaderProgram {
             u_cell_dim: cell_dim,
             u_visual_bell: visual_bell,
             u_background: background,
-            padding_x: config.padding().x,
-            padding_y: config.padding().y,
+            padding_x: (config.padding().x as f64 * dpr) as u8,
+            padding_y: (config.padding().y as f64 * dpr) as u8,
         };
 
         shader.update_projection(size.width as f32, size.height as f32);

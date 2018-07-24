@@ -148,7 +148,7 @@ impl Display {
             .expect("glutin returns window size").to_physical(dpr);
 
         // Create renderer
-        let mut renderer = QuadRenderer::new(config, viewport_size)?;
+        let mut renderer = QuadRenderer::new(config, viewport_size, dpr)?;
 
         let (glyph_cache, cell_width, cell_height) =
             Self::new_glyph_cache(dpr, &mut renderer, config)?;
@@ -167,7 +167,7 @@ impl Display {
                 (height + 2 * u32::from(config.padding().y)) as f64);
 
             window.set_inner_size(new_viewport_size.to_logical(dpr));
-            renderer.resize(new_viewport_size);
+            renderer.resize(new_viewport_size, dpr);
             viewport_size = new_viewport_size;
         }
 
@@ -322,7 +322,7 @@ impl Display {
             }
 
             self.window.resize(psize);
-            self.renderer.resize(psize);
+            self.renderer.resize(psize, dpr);
         }
 
     }
